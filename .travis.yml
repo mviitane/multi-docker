@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t mviitane/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true mviitane/react-test npm test
+
+after_success:
+  - docker build -t mviitane/multi-client ./client
+  - docker build -t mviitane/multi-nginx ./nginx
+  - docker build -t mviitane/multi-server ./server
+  - docker build -t mviitane/multi-worker ./worker
+  # log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push mviitane/multi-client
+  - docker push mviitane/multi-nginx
+  - docker push mviitane/multi-server
+  - docker push mviitane/multi-worker
